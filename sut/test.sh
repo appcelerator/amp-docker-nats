@@ -2,6 +2,7 @@
 
 export GOPATH=/go
 NATS_HOST=${NATS_HOST:-nats}
+TMPFILE=$(mktemp)
 
 echo -n "test NATS Availability... "
 r=1
@@ -23,12 +24,12 @@ fi
 echo " [OK]"
 
 echo -n "run a subscriber... "
-nohup go run /bin/nats-sub.go -s nats://$NATS_HOST:4222 msg.test &
+go run /bin/nats-sub.go -s nats://$NATS_HOST:4222 msg.test > $TMPFILE 2>&1  &
 r=1
 i=0
 while [[ $r -ne 0 ]]; do
   sleep 1
-  grep -q "Listening on \[msg.test\]" nohup.out
+  grep -q "Listening on \[msg.test\]" $TMPFILE
   r=$?
   ((i++))
   if [[ $i -gt 3 ]]; then break; fi
@@ -37,10 +38,10 @@ done
 if [[ $r -ne 0 ]]; then
   echo
   echo "failed"
-  cat nohup.out
+  cat $TMPFILE
   exit 1
 fi
-echo "[OK]"
+echo " [OK]"
 
 
 echo -n "publish messages... "
@@ -56,23 +57,23 @@ if [[ $? -ne 0 ]]; then
   echo "failed"
   exit 1
 fi
-echo "[OK]"
+echo " [OK]"
 
 echo -n "receive messages... "
-egrep -q "Received on \[msg.test\].*:.*'test message 1'" nohup.out
+egrep -q "Received on \[msg.test\].*:.*'test message 1'" $TMPFILE
 r=$?
 if [[ $r -ne 0 ]]; then
   echo
   echo " message 1 failed"
-  cat nohup.out
+  cat $TMPFILE
   exit 1
 fi
-egrep -q "Received on \[msg.test\].*:.*'test message 2'" nohup.out
+egrep -q "Received on \[msg.test\].*:.*'test message 2'" $TMPFILE
 r=$?
 if [[ $r -ne 0 ]]; then
   echo
   echo "message 2 failed"
-  cat nohup.out
+  cat $TMPFILE
   exit 1
 fi
 echo " [OK]"
