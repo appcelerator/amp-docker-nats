@@ -2,6 +2,7 @@
 
 export GOPATH=/go
 NATS_HOST=${NATS_HOST:-nats}
+NATS_PORT=4222
 TMPFILE=$(mktemp)
 
 echo -n "test NATS Availability... "
@@ -24,7 +25,7 @@ fi
 echo " [OK]"
 
 echo -n "run a subscriber... "
-go run /bin/nats-sub.go -s nats://$NATS_HOST:4222 msg.test > $TMPFILE 2>&1  &
+go run /bin/nats-sub.go -s nats://$NATS_HOST:$NATS_PORT msg.test > $TMPFILE 2>&1  &
 r=1
 i=0
 while [[ $r -ne 0 ]]; do
@@ -45,37 +46,40 @@ echo " [OK]"
 
 
 echo -n "publish messages... "
-go run /bin/nats-pub.go -s nats://$NATS_HOST:4222 msg.test "test message 1" 2>&1 | grep -q "Published \[msg.test\]"
-if [[ $? -ne 0 ]]; then
+r=0
+max=10
+for i in $(seq $max); do
+  go run /bin/nats-pub.go -s nats://$NATS_HOST:$NATS_PORT msg.test "test message $i" 2>&1 | grep -q "Published \[msg.test\]"
+  r=$?
+  if [[ $r -ne 0 ]]; then
+    break
+  fi
+done
+if [[ $r -ne 0 ]]; then
   echo
-  echo "failed"
-  exit 1
-fi
-go run /bin/nats-pub.go -s nats://$NATS_HOST:4222 msg.test "test message 2" 2>&1 | grep -q "Published \[msg.test\]"
-if [[ $? -ne 0 ]]; then
-  echo
-  echo "failed"
+  echo "failed ($i/$max msg sent)"
   exit 1
 fi
 echo " [OK]"
 
 echo -n "receive messages... "
-egrep -q "Received on \[msg.test\].*:.*'test message 1'" $TMPFILE
-r=$?
-if [[ $r -ne 0 ]]; then
+n=$(egrep -c "Received on \[msg.test\].*:.*'test message .*'" $TMPFILE)
+if [[ $n -ne $max ]]; then
   echo
-  echo " message 1 failed"
-  cat $TMPFILE
-  exit 1
-fi
-egrep -q "Received on \[msg.test\].*:.*'test message 2'" $TMPFILE
-r=$?
-if [[ $r -ne 0 ]]; then
-  echo
-  echo "message 2 failed"
+  echo " failed ($n/$max messages received)"
   cat $TMPFILE
   exit 1
 fi
 echo " [OK]"
+
+echo -n "benchmark...        "
+go run /bin/nats-bench.go -s nats://$NATS_HOST:$NATS_PORT -np 10 -ns 1  -n 500 -ms 10 msg.bench > $TMPFILE 2>&1
+if [[ $? -ne 0 ]]; then
+  echo
+  echo "failed"
+  exit 1
+fi
+echo " [OK]"
+cat $TMPFILE
 
 echo "all tests passed successfully"
