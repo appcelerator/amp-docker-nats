@@ -27,6 +27,8 @@ MAX_CONNECTIONS | Max connections | 100 |
 MAX_CONTROL_LINE | Maximum protocol control line | 512 |
 MAX_PAYLOAD | Maximum payload | 65536 |
 MAX_PENDING_SIZE | Slow consumer threshold | 10000000 |
+LOGGING_DEBUG | Debug logs | false | true
+LOGGING_TRACE | Trace logs | false | true
 
 ## Tags
 
