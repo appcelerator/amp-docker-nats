@@ -2,8 +2,8 @@ services:
   - docker
 
 env:
-  - NATS_VERSION: master
-  - DOCKER_IMAGE: appcelerator/amp-nats-streaming
+  - NATS_VERSION="master"
+  - DOCKER_IMAGE="appcelerator/amp-nats-streaming"
 
 script:
   - ./update.sh "$NATS_VERSION"
