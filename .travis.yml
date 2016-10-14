@@ -10,3 +10,4 @@ script:
     fi
   - docker build -t $TRAVIS_REPO_SLUG:$DOCKER_TAG .
   - docker push $TRAVIS_REPO_SLUG:$DOCKER_TAG
+
