@@ -5,7 +5,7 @@ script:
   - ./update.sh master
   - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
   - export DOCKER_TAG="latest"
-  - if [ "$TRAVIS_BRANCH" <> "master" ]; then export DOCKER_TAG="$TRAVIS_BRANCH"; fi
+  - if [ "$TRAVIS_BRANCH" != "master" ]; then export DOCKER_TAG="$TRAVIS_BRANCH"; fi
   - env
   - docker build -t $TRAVIS_REPO_SLUG:$DOCKER_TAG .
   - docker push $TRAVIS_REPO_SLUG:$DOCKER_TAG
