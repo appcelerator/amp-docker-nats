@@ -1,0 +1,12 @@
+services:
+  - docker
+
+script:
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      export DOCKER_TAG=latest
+    else
+      export DOCKER_TAG=$TRAVIS_BRANCH
+    fi
+  - docker build -t $TRAVIS_REPO_SLUG:$DOCKER_TAG .
+  - docker push $TRAVIS_REPO_SLUG:$DOCKER_TAG
